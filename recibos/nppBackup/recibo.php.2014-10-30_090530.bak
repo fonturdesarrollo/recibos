@@ -1,0 +1,118 @@
+<?php
+	session_start();
+?>
+<html>
+<head>
+	<meta charset='utf-8' />
+</head>
+<body>
+<?php
+	//require('../incluidos/constantes.php');
+	if(isset($_POST['cuenta'])&&isset($_POST['ci'])&&isset($_POST['año_quincena'])&&isset($_POST['mes_quincena'])&&isset($_POST['quincena'])&&isset($_POST['captcha_code'])){
+	include '../incluidos/securimage/securimage.php';
+		$securimage = new Securimage();
+		if ($securimage->check($_POST['captcha_code']) == false) {
+			echo '<META HTTP-EQUIV="Refresh" Content="0; URL=ingreso.php?error=cvi">';
+			return 0;
+		}
+		if($_POST['quincena']=='1'){
+			$dia_quincena_1='01';
+			$dia_quincena_2='15';
+		}else{
+			$dia_quincena_1='16';
+			$mes = mktime( 0, 0, 0, $_POST['mes_quincena'], 1, $_POST['año_quincena'] );
+			$dia_quincena_2 = date('t',$mes);
+		}
+		$fecha_inicial=$_POST['año_quincena']."-".$_POST['mes_quincena']."-".$dia_quincena_1;
+		$fecha_final=$_POST['año_quincena']."-".$_POST['mes_quincena']."-".$dia_quincena_2;
+		$numero_cuenta="0".$_POST['cuenta'];
+		$cedula=$_POST['ci'];
+		$total_asignaciones = 0;
+		$total_deducciones = 0;
+		//include('pgsql-consulta_recibo.php');
+	}else{
+		header('Location: ingreso.php');
+	}
+	
+	$conexion = pg_pconnect("host=172.16.7.195 port=5432 dbname=SIMA user=cidesa password=cidesa");
+	if (!$conexion) {
+		echo "No se conectó a PostgreSQL."; exit;
+	}
+
+	$consulta = pg_query($conexion, "SELECT * FROM \"SIMA014\".nphiscon WHERE cedemp = '$cedula' AND cuenta_banco = '$numero_cuenta' AND fecnom BETWEEN '$fecha_inicial' AND '$fecha_final' LIMIT 1;");
+	if (!$consulta) {
+		echo "No se pudo ejecutar la consulta."; exit;
+	}
+
+	while ($fila = pg_fetch_array($consulta)) {
+		$codigo_nomina = $fila['codnom'];
+		$cedula_empleado = $fila['cedemp'];
+		
+		echo "<p>fecnom: $fila[fecnom]</p>";
+		echo "<p>nomemp: $fila[nomemp]</p>";
+		echo "<p>cedemp: $cedula_empleado</p>";
+		
+		$consulta1 = pg_query($conexion, "SELECT fecing FROM \"SIMA014\".nphojint WHERE cedemp = '$cedula_empleado';");
+		if (!$consulta1) {
+			echo "No se pudo ejecutar la consulta."; exit;
+		}
+
+		while ($fila1 = pg_fetch_array($consulta1)) {
+			echo "<p>fecing: $fila1[fecing]</p>";
+		}
+		
+		$consulta2 = pg_query($conexion, "SELECT nomnom FROM \"SIMA014\".npnomina WHERE codnom = '$codigo_nomina';");
+		if (!$consulta2) {
+			echo "No se pudo ejecutar la consulta."; exit;
+		}
+
+		while ($fila2 = pg_fetch_array($consulta2)) {
+			echo "<p>nomnom: $fila2[nomnom]</p>";
+		}
+		
+		echo "<p>desniv: $fila[desniv]</p>";
+		echo "<p>nomcar: $fila[nomcar]</p>";
+		echo "<p>cuenta_banco: $fila[cuenta_banco]</p>";
+		
+		$consulta3 = pg_query($conexion, "SELECT monto FROM \"SIMA014\".nphiscon WHERE cedemp = '$cedula' AND cuenta_banco = '$numero_cuenta' AND nomcon = 'SUELDO BASICO QUINCENAL' AND fecnom BETWEEN '$fecha_inicial' AND '$fecha_final';");
+		if (!$consulta3) {
+			echo "No se pudo ejecutar la consulta."; exit;
+		}
+
+		while ($fila3 = pg_fetch_array($consulta3)) {
+			$sueldo_basico_mensual = $fila3['monto']*2;
+			echo "<p>monto: $sueldo_basico_mensual</p>";
+		}
+	}
+	
+	$consulta_asignaciones = pg_query($conexion, "SELECT nomcon, monto FROM \"SIMA014\".nphiscon WHERE cedemp = '$cedula' AND cuenta_banco = '$numero_cuenta' AND ASIDED = 'A' AND fecnom BETWEEN '$fecha_inicial' AND '$fecha_final';");
+	if (!$consulta_asignaciones) {
+		echo "No se pudo ejecutar la consulta."; exit;
+	}
+	
+	while ($fila_asignaciones = pg_fetch_array($consulta_asignaciones)) {
+		echo "<p>$fila_asignaciones[nomcon]: $fila_asignaciones[monto]</p>";
+		$total_asignaciones += $fila_asignaciones['monto'];
+	}
+	
+	echo "<p>total_asignaciones: $total_asignaciones</p>";
+	
+	$consulta_deducciones = pg_query($conexion, "SELECT nomcon, monto FROM \"SIMA014\".nphiscon WHERE cedemp = '$cedula' AND cuenta_banco = '$numero_cuenta' AND ASIDED = 'D' AND fecnom BETWEEN '$fecha_inicial' AND '$fecha_final';");
+	if (!$consulta_deducciones) {
+		echo "No se pudo ejecutar la consulta."; exit;
+	}
+	
+	while ($fila_deducciones = pg_fetch_array($consulta_deducciones)) {
+		echo "<p>$fila_deducciones[nomcon]: $fila_deducciones[monto]</p>";
+		$total_deducciones += $fila_deducciones['monto'];
+	}
+	
+	echo "<p>total_deducciones: $total_deducciones</p>";
+	
+	$total_cobrar=$total_asignaciones-$total_deducciones;
+	echo "<p>total_cobrar: $total_cobrar</p>";
+	
+	//echo '<!--<META HTTP-EQUIV="Refresh" Content="0; URL=pgsql-insercion_recibo.php">-->';
+?>
+</body>
+</html>

@@ -1,0 +1,361 @@
+<?php
+	//require('../incluidos/constantes.php');
+	include('pgsql-consulta_recibo.php');
+?>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='utf-8' />
+	<title>SISTEMA DE SOLICITUD DE RECIBOS</title>
+	<link rel="stylesheet" type="text/css" href="../estilo.css" />
+	<script src="../incluidos/jquery.min.js"></script>
+	<script type='text/javascript'>
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// IMPORTANTE! LEER!! //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// CUANDO ESCRIBÍ ESTE CÓDIGO SOLO DIOS Y YO SABÍAMOS LO QUE ESTABA HACIENDO, AHORA SOLO DIOS LO SABE //////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			function validar_ingreso(){				
+			ruta=document.ingreso;		
+			if(ruta.cuenta.value==''){
+				alert('Debe rellenar el campo cuenta nómina.');
+			}else if(isNaN(ruta.cuenta.value)){
+				alert('El número de cuenta solo debe contener números 0-9.');
+			}else if(ruta.cuenta.value.length!=20){
+				alert('El número de cuenta de nomina debe contener 20 dígitos.\nAviso: Recuerde que no es el número de su tarjeta de débito.');
+			}else if(ruta.ci.value==''){
+				alert('Debe rellenar el campo cédula de identidad.');
+			}else if(isNaN(ruta.ci.value)){
+				alert('El número de cédula solo debe contener números 0-9.');
+			}else if(ruta.mes_quincena.selectedIndex==0){
+				alert('Debe seleccionar el mes de la quincena a solicitar.');
+			}else if(ruta.quincena.selectedIndex==0){
+				alert('Debe seleccionar la quincena a solicitar.');
+			}else {
+				//alert('¡ATENCIÓN!\nEl Documento será válido por treinta (30) días a partir de su emisión.\nEl sistema generará un máximo de tres (3) constancias cada mes.\nLa remuneración especificada en este documento corresponde al mes anterior de la solicitud de la misma.');
+				ruta.submit();
+			}
+		}
+		function carga(){
+			//document.ingreso.año_quincena.selectedIndex=0;
+			document.ingreso.mes_quincena.selectedIndex=0;
+			document.ingreso.quincena.selectedIndex=0;
+		}
+		
+		function recibo_dinamico(quincenaindex){
+			base=2015;
+				año=<?php echo date("Y"); ?>;
+				añoseleccionado=base+document.ingreso.año_quincena.selectedIndex;
+				htmlaño='';
+				for(base=2015;base<=año;base++){
+					if(base==añoseleccionado){
+						sel='selected="selected"';
+					}else{
+						sel='';
+					}
+					htmlaño+='<option '+sel+'>'+base+'</option>';
+				}
+				if(document.getElementById("tipo_nomina").selectedIndex!="0"){
+					var aq=$("#año_quincena").val();
+					var mq=$("#mes_quincena").val();
+					var dataString = 'aq='+ aq + '&mq=' + mq;
+					$.ajax({
+						type: "POST",
+						url: "../incluidos/carga_especial.php",
+						data: dataString,
+						cache: false,
+						success: function(html){
+							$("#quincena").html(html);
+						}
+					});
+				}else{
+					if(document.getElementById("año_quincena").selectedIndex=="0"){
+						document.getElementById("selecciona_fecha").innerHTML = '<select name="año_quincena" id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="recibo_dinamico(document.getElementById("año_quincena").selectedIndex);">'+htmlaño+'</select><select id="mes_quincena" name="mes_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="recibo_dinamico(document.getElementById("año_quincena").selectedIndex);"><option></option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><select name="quincena" id="quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option>1</option><option>2</option></select>';
+						document.getElementById("año_quincena").selectedIndex=quincenaindex;
+					}else{
+						document.getElementById("selecciona_fecha").innerHTML = '<select name="año_quincena" id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="recibo_dinamico(document.getElementById("año_quincena").selectedIndex);">'+htmlaño+'</select><select id="mes_quincena" name="mes_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="recibo_dinamico(document.getElementById("año_quincena").selectedIndex);"><option></option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><select name="quincena" id="quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option>1</option><option>2</option></select>';
+						document.getElementById("año_quincena").selectedIndex=quincenaindex;
+					}
+				}
+		}
+		
+		/*function selecciona_fecha(){
+			//alert(document.getElementById("año_quincena").selectedIndex);
+			//alert(año);
+			base=2015;
+			año=<?php echo date("Y"); ?>;
+			añoseleccionado=base+document.ingreso.año_quincena.selectedIndex;
+			htmlaño='';
+			for(base=2015;base<=año;base++){
+				if(base==añoseleccionado){
+					sel='selected="selected"';
+				}else{
+					sel='';
+				}
+				htmlaño+='<option '+sel+'>'+base+'</option>';
+			}
+			if(document.getElementById("año_quincena").selectedIndex=="0"){
+				//document.getElementById("selecciona_fecha").innerHTML = '<select name="año_quincena" id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="selecciona_fecha();">'+htmlaño+'</select><select id="mes_quincena" name="mes_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option value="01" disabled="disabled">Enero</option><option value="02" disabled="disabled">Febrero</option><option value="03" disabled="disabled">Marzo</option><option value="04" disabled="disabled">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><select name="quincena" id="quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option>1</option><option>2</option></select>';
+				document.getElementById("selecciona_fecha").innerHTML = '<select name="año_quincena" id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="selecciona_fecha();">'+htmlaño+'</select><select name="mes_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><select name="quincena" id="quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option>1</option><option>2</option></select>';
+			}else{
+				document.getElementById("selecciona_fecha").innerHTML = '<select name="año_quincena" id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="selecciona_fecha();">'+htmlaño+'</select><select name="mes_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><select name="quincena" id="quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option>1</option><option>2</option></select>';
+			}
+		}
+		$(document).ready(function(){
+			$("#tipo_nomina").change(function(){
+				base=2015;
+				año=<?php echo date("Y"); ?>;
+				añoseleccionado=base+document.ingreso.año_quincena.selectedIndex;
+				htmlaño='';
+				for(base=2015;base<=año;base++){
+					if(base==añoseleccionado){
+						sel='selected="selected"';
+					}else{
+						sel='';
+					}
+					htmlaño+='<option '+sel+'>'+base+'</option>';
+				}
+				if(document.getElementById("tipo_nomina").selectedIndex!="0"){
+					var aq=$("#año_quincena").val();
+					var mq=$("#mes_quincena").val();
+					var dataString = 'aq='+ aq + '&mq=' + mq;
+					$.ajax({
+						type: "POST",
+						url: "../incluidos/carga_especial.php",
+						data: dataString,
+						cache: false,
+						success: function(html){
+							$("#quincena").html(html);
+						}
+					});
+				}else{
+					if(document.getElementById("año_quincena").selectedIndex=="0"){
+						//document.getElementById("selecciona_fecha").innerHTML = '<select name="año_quincena" id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="selecciona_fecha();">'+htmlaño+'</select><select id="mes_quincena" name="mes_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option value="01" disabled="disabled">Enero</option><option value="02" disabled="disabled">Febrero</option><option value="03" disabled="disabled">Marzo</option><option value="04" disabled="disabled">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><select name="quincena" id="quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option>1</option><option>2</option></select>';
+						document.getElementById("selecciona_fecha").innerHTML = '<select name="año_quincena" id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="selecciona_fecha();">'+htmlaño+'</select><select id="mes_quincena" name="mes_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><select name="quincena" id="quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option>1</option><option>2</option></select>';
+					}else{
+						document.getElementById("selecciona_fecha").innerHTML = '<select name="año_quincena" id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="selecciona_fecha();">'+htmlaño+'</select><select id="mes_quincena" name="mes_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><select name="quincena" id="quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option>1</option><option>2</option></select>';
+					}
+				}
+			});
+		});
+		$(document).ready(function(){
+		$("#año_quincena").change(function(){
+				base=2015;
+				año=<?php echo date("Y"); ?>;
+				añoseleccionado=base+document.ingreso.año_quincena.selectedIndex;
+				htmlaño='';
+				for(base=2015;base<=año;base++){
+					if(base==añoseleccionado){
+						sel='selected="selected"';
+					}else{
+						sel='';
+					}
+					htmlaño+='<option '+sel+'>'+base+'</option>';
+				}
+				if(document.getElementById("tipo_nomina").selectedIndex!="0"){
+					var aq=$("#año_quincena").val();
+					var mq=$("#mes_quincena").val();
+					var dataString = 'aq='+ aq + '&mq=' + mq;
+					$.ajax({
+						type: "POST",
+						url: "../incluidos/carga_especial.php",
+						data: dataString,
+						cache: false,
+						success: function(html){
+							$("#quincena").html(html);
+						}
+					});
+				}else{
+					if(document.getElementById("año_quincena").selectedIndex=="0"){
+						//document.getElementById("selecciona_fecha").innerHTML = '<select name="año_quincena" id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="selecciona_fecha();">'+htmlaño+'</select><select id="mes_quincena" name="mes_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option value="01" disabled="disabled">Enero</option><option value="02" disabled="disabled">Febrero</option><option value="03" disabled="disabled">Marzo</option><option value="04" disabled="disabled">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><select name="quincena" id="quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option>1</option><option>2</option></select>';
+						document.getElementById("selecciona_fecha").innerHTML = '<select name="año_quincena" id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="selecciona_fecha();">'+htmlaño+'</select><select id="mes_quincena" name="mes_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><select name="quincena" id="quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option>1</option><option>2</option></select>';
+					}else{
+						document.getElementById("selecciona_fecha").innerHTML = '<select name="año_quincena" id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="selecciona_fecha();">'+htmlaño+'</select><select id="mes_quincena" name="mes_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><select name="quincena" id="quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option>1</option><option>2</option></select>';
+					}
+				}
+			});
+		});
+		$(document).ready(function(){
+			$("#mes_quincena").change(function(){
+				base=2015;
+				año=<?php echo date("Y"); ?>;
+				añoseleccionado=base+document.ingreso.año_quincena.selectedIndex;
+				htmlaño='';
+				for(base=2015;base<=año;base++){
+					if(base==añoseleccionado){
+						sel='selected="selected"';
+					}else{
+						sel='';
+					}
+					htmlaño+='<option '+sel+'>'+base+'</option>';
+				}
+				if(document.getElementById("tipo_nomina").selectedIndex!="0"){
+					var aq=$("#año_quincena").val();
+					var mq=$("#mes_quincena").val();
+					var dataString = 'aq='+ aq + '&mq=' + mq;
+					$.ajax({
+						type: "POST",
+						url: "../incluidos/carga_especial.php",
+						data: dataString,
+						cache: false,
+						success: function(html){
+							$("#quincena").html(html);
+						}
+					});
+				}else{
+					if(document.getElementById("año_quincena").selectedIndex=="0"){
+						//document.getElementById("selecciona_fecha").innerHTML = '<select name="año_quincena" id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="selecciona_fecha();">'+htmlaño+'</select><select id="mes_quincena" name="mes_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option value="01" disabled="disabled">Enero</option><option value="02" disabled="disabled">Febrero</option><option value="03" disabled="disabled">Marzo</option><option value="04" disabled="disabled">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><select name="quincena" id="quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option>1</option><option>2</option></select>';
+						document.getElementById("selecciona_fecha").innerHTML = '<select name="año_quincena" id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="selecciona_fecha();">'+htmlaño+'</select><select id="mes_quincena" name="mes_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><select name="quincena" id="quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option>1</option><option>2</option></select>';
+					}else{
+						document.getElementById("selecciona_fecha").innerHTML = '<select name="año_quincena" id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir" onchange="selecciona_fecha();">'+htmlaño+'</select><select id="mes_quincena" name="mes_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><select name="quincena" id="quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"><option selected="selected"></option><option>1</option><option>2</option></select>';
+					}
+				}
+			});
+		});*/
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// IMPORTANTE! LEER!! MENSAJE AL COMIENZO DE LA PÁGINA /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	</script>
+</head>
+<body onload="carga(); document.getElementById('captcha').src = '../incluidos/securimage/securimage_show.php?' + Math.random(); return false">
+	<table class='cien'>
+		<tr>
+			<td class='encabezado'>
+				<!--<img class='enc1' src='imagenes/header_gobierno.png' />-->
+				<!--<img class='enc2' src='imagenes/banner_fontur.png' />-->
+				<img class='enc3' src='../imagenes/cabecera.png' />
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<form name='ingreso' action='recibo.php' method='post'>
+				<table align='center' class='auto' id='lineado'>
+					<tr>
+						<td colspan='2' class='auto' id='centrolineado'>
+							<p class='titulo'>SISTEMA DE SOLICITUD DE RECIBOS</p>
+						</td>
+					</tr>
+					<tr>
+						<td colspan='2' class='auto' id='centrolineado'>
+							<p>INGRESE LOS DATOS SOLICITADOS Y PRESIONE 'SIGUIENTE'</p>
+						</td>
+					</tr>
+					<tr>
+						<td class='auto' id='derecha'>
+							<p>N° DE CUENTA NÓMINA</p>
+						</td>
+						<td class='auto'>
+							<p><input type='text' maxlength='20' name='cuenta' id="title" title="Ingrese su número de cuenta. &#10;En caso de no poseer cuenta, coloque su número de cédula y complete con ceros hasta llenar 20 dígitos.&#10;Ejemplo: 12345678900000000000"/></p>
+						</td>
+					</tr>
+					<tr>
+						<td class='auto' id='derecha'>
+							<p>CÉDULA DE IDENTIDAD</p>
+						</td>
+						<td class='auto'>
+							<p><input type='text' maxlength='8' name='ci' title="Ingrese su número de Cédula sin puntos.&#10;Ejemplo: 18000000"/></p>
+						</td>
+					</tr>
+					<tr>
+						<td class='auto' id='derecha'>
+							<p>TIPO DE NÓMINA</p>
+						</td>
+						<td class='auto'>
+							<p id="selecciona_nomina">
+								<select name="tipo_nomina" id="tipo_nomina" title="Seleccione el tipo de nómina a consultar." onchange="recibo_dinamico(document.getElementById('año_quincena').selectedIndex);">
+									<option value="N" selected="selected">Normal</option>
+									<option value="S">Especial</option>
+								</select>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<td class='auto' id='derecha'>
+							<p>QUINCENA</p>
+						</td>
+						<td class='auto'>
+							<p id="selecciona_fecha">
+								<select name='año_quincena' id="año_quincena" title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"  onchange="recibo_dinamico(document.getElementById('año_quincena').selectedIndex);"">
+									<!--<option selected='selected'>2015</option>-->
+									<?php
+										$año="2015";
+										//echo "<option selected='selected'>".$año."</option>";
+										//$año++;
+										while($año<=date("Y")){
+											if($año<date("Y")){
+												echo "<option>".$año."</option>";
+											}else{
+												echo "<option selected='selected'>".$año."</option>";
+											}
+											$año++;
+										}
+									?>
+								</select>
+								<select id="mes_quincena" name='mes_quincena' title="Seleccione de la lista desplegable la quincena del recibo que desea emitir"  onchange="recibo_dinamico(document.getElementById('año_quincena').selectedIndex);">
+									<option selected='selected'></option>
+									<option value="01"><!--disabled="disabled"-->Enero</option>
+									<option value="02"><!--disabled="disabled"-->Febrero</option>
+									<option value="03"><!--disabled="disabled"-->Marzo</option>
+									<option value="04"><!--disabled="disabled"-->Abril</option>
+									<option value="05">Mayo</option>
+									<option value="06">Junio</option>
+									<option value="07">Julio</option>
+									<option value="08">Agosto</option>
+									<option value="09">Septiembre</option>
+									<option value="10">Octubre</option>
+									<option value="11">Noviembre</option>
+									<option value="12">Diciembre</option>
+								</select>
+								<select name='quincena' id='quincena' title="Seleccione de la lista desplegable la quincena del recibo que desea emitir">
+									<option selected='selected'></option>
+									<option>1</option>
+									<option>2</option>
+								</select>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<td colspan='2' class='auto' id='centrado'>
+							<p>Código de Seguridad</p>
+							<p><img id="captcha" src="../incluidos/securimage/securimage_show.php" alt="CAPTCHA Image" /></p>
+							<p><input type="text" name="captcha_code" size="10" maxlength="6" title="Introduzca el código de seguridad tal como se muestra en la imágen respetando mayúsculas y minúsculas"/></p>
+							<p><a href="#" onclick="document.getElementById('captcha').src = '../incluidos/securimage/securimage_show.php?' + Math.random(); return false">Haga clic para cambiar la imágen.</a></p>
+						</td>
+					</tr>
+					<tr>
+						<td colspan='2' class='auto' id='centrolineado'>
+							<p>
+								<input type='button' name='siguiente' value='Siguiente' onclick='validar_ingreso();'/>
+								<input type='button' name='salir' value='Salir' onclick="javascript:window.location.href='../index.php';"/>
+								<input type='hidden' name='bisiesto' value='<?php echo bisiesto(date('Y')) ?>' />
+							</p>
+						</td>
+					</tr>
+				</table>
+				<?php
+					if(isset($_GET['error'])){
+						if($_GET['error']=='mpm'){
+							echo "<br /><p class='valido' id='centrado'>USTED HA ALCANZADO EL MÁXIMO PERMITIDO POR EL MES, COMUNÍQUESE CON RECURSOS HUMANOS.</p>";
+						}else if($_GET['error']=='rne'){
+							echo "<br /><p class='valido' id='centrado'>REGISTRO NO ENCONTRADO O NOMINA NO CARGADA, VERIFIQUE SU INFORMACIÓN.</p>";
+						}else if($_GET['error']=='cvi'){
+							echo "<br /><p class='valido' id='centrado'>CÓDIGO DE SEGURIDAD INCORRECTO, INTÉNTELO DE NUEVO.</p>";
+						}else if($_GET['error']=='nnc'){
+							echo "<br /><p class='valido' id='centrado'>LA NÓMINA DE ESTA QUINCENA NO HA SIDO GENERADA.</p>";
+						}
+					}
+				?>
+				</form>
+			</td>
+		</tr>
+		<tr>
+			<td class='pie'>
+				<!--<p class='pie' id='centrado'><?php //echo $institucion2; ?></p>
+				<p class='pie' id='centrado'><?php //echo $direccioninstitucion; ?></p>
+				<p class='pie' id='centrado'><?php //echo $contacto; ?></p>-->
+				<img class='pie1' src='../imagenes/pie.png' />
+			</td>
+		</tr>
+	</table>
+</body>
+</html>

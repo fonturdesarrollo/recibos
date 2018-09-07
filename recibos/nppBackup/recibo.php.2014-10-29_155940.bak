@@ -1,0 +1,39 @@
+<?php
+	session_start();
+?>
+<html>
+<head>
+	<meta charset='utf-8' />
+</head>
+<body>
+<?
+	require('../incluidos/constantes.php');
+	if(isset($_POST['cuenta'])&&isset($_POST['ci'])&&isset($_POST['año_quincena'])&&isset($_POST['mes_quincena'])&&isset($_POST['quincena'])&&isset($_POST['captcha_code'])){
+	include '../incluidos/securimage/securimage.php';
+		$securimage = new Securimage();
+		if ($securimage->check($_POST['captcha_code']) == false) {
+			echo '<META HTTP-EQUIV="Refresh" Content="0; URL=ingreso.php?error=cvi">';
+			return 0;
+		}
+		if($_POST['quincena']=='1'){
+			$dia_quincena_1='01';
+			$dia_quincena_2='15';
+		}else{
+			$dia_quincena_1='16';
+			$mes = mktime( 0, 0, 0, $_POST['mes_quincena'], 1, $_POST['año_quincena'] );
+			$dia_quincena_2 = date('t',$mes);
+		}
+		$fecha_inicial=$_POST['año_quincena']."-".$_POST['mes_quincena']."-".$dia_quincena_1;
+		$fecha_final=$_POST['año_quincena']."-".$_POST['mes_quincena']."-".$dia_quincena_2;
+		$cuenta="0".$_POST['cuenta'];
+		$ci=$_POST['ci'];
+		include('pgsql-consulta_recibo.php');
+		$añoanterior = date('Y')-1;
+	}else{
+		header('Location: ingreso.php');
+	}
+	
+	echo '<META HTTP-EQUIV="Refresh" Content="0; URL=pgsql-insercion_recibo.php">';
+?>
+</body>
+</html>
