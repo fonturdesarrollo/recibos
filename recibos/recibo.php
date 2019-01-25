@@ -25,7 +25,12 @@
 			$fecha_final=$_POST['año_quincena']."-".$_POST['mes_quincena']."-".$_POST['quincena'];
 		}
 		
-		$esquema="SIMA0".substr($_POST['año_quincena'],2,2);
+		$año=$_POST['año_quincena'];
+		if ($año=="2018"){
+			$esquema="SIMA9".substr($año,2,2);
+		} else {
+			$esquema="SIMA0".substr($año,2,2);
+		}
 		
 		//PRUEBA CONTROL TIEMPO
 		if($fecha_final>=date("Y-m-d")){
