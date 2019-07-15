@@ -26,7 +26,7 @@
 		}
 		
 		$año=$_POST['año_quincena'];
-		if ($año=="2018"){
+		if ($año>="2018"){
 			$esquema="SIMA9".substr($año,2,2);
 		} else {
 			$esquema="SIMA0".substr($año,2,2);
